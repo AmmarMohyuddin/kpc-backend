@@ -5,6 +5,7 @@ const {
   successResponse,
   errorResponse,
 } = require("../../../../utils/response");
+const sendMail = require("../../../../utils/mailer");
 
 async function signUp(req, res) {
   try {
@@ -29,6 +30,7 @@ async function signUp(req, res) {
     const importUser = await ImportUser.findOne({
       person_number: person_number,
     });
+
     if (!importUser) {
       return errorResponse(
         res,
@@ -51,7 +53,20 @@ async function signUp(req, res) {
 
     await newUser.save();
 
-    return successResponse(res, 201, "User registered successfully", newUser);
+    setImmediate(async () => {
+      try {
+        await sendMail({
+          to: newUser.email,
+          subject: "Welcome to KPC - Your Account is Created",
+          text: `Hi ${newUser.full_name},\n\nWelcome to KPC! Your account has been successfully created. Here are your login details:\n\nEmail: ${newUser.email}\nPassword: ${password}\n\nPlease keep your credentials secure.`,
+          html: `<p>Hi <strong>${newUser.full_name}</strong>,</p><p>Welcome to KPC! Your account has been successfully created. Here are your login details:</p><p><strong>Email:</strong> ${newUser.email}</p><p><strong>Password:</strong> ${password}</p><p>Please keep your credentials secure.</p><p>Best regards,<br>KPC-Kuwait Paint Company</p>`,
+        });
+      } catch (err) {
+        console.error("Failed to send email:", err.message);
+      }
+    });
+
+    successResponse(res, 201, "User registered successfully", newUser);
   } catch (error) {
     console.error("Error registering user:", error.message, error.stack);
     return errorResponse(res, 500, "Internal server error");
