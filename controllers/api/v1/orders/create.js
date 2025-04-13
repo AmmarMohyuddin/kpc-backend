@@ -4,28 +4,27 @@ const {
   errorResponse,
 } = require("../../../../utils/response");
 
+let orderCount = 0; // Starts from 0
+
 async function create(req, res) {
   try {
     const { status } = req.body;
-
-    const lastOrder = await Order.findOne().sort({ orderId: -1 });
-    const lastOrderNumber = lastOrder ? parseInt(lastOrder.orderId) : 0;
-
-    const currentOrderId = lastOrderNumber + 1;
+    const orderId = generateOrderId();
 
     if (status === true) {
       const newOrder = new Order({
-        orderId: currentOrderId.toString(),
+        orderId,
         status: true,
       });
 
       await newOrder.save();
+      orderCount++; // Increment only when saved
     }
 
     return successResponse(res, 200, "Order processed", {
-      orderId: currentOrderId,
+      orderId,
       created: status === true,
-      nextOrderId: currentOrderId + 1,
+      nextOrderId: `KPCM-${orderCount + 1}`,
     });
   } catch (error) {
     console.error("Error creating order:", error.message);
@@ -35,6 +34,10 @@ async function create(req, res) {
       "An error occurred while processing your request"
     );
   }
+}
+
+function generateOrderId() {
+  return `KPCM-${orderCount + 1}`;
 }
 
 module.exports = create;
