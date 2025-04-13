@@ -4,27 +4,46 @@ const {
   errorResponse,
 } = require("../../../../utils/response");
 
-let orderCount = 0; // Starts from 0
-
 async function create(req, res) {
   try {
     const { status } = req.body;
-    const orderId = generateOrderId();
+
+    // Get the highest numeric orderId
+    const lastOrder = await Order.findOne({}).sort({ $natural: -1 }); // Or fallback to numeric max
+
+    // Convert safely to number
+    let lastOrderNumber = 0;
+    if (lastOrder && !isNaN(lastOrder.orderId)) {
+      lastOrderNumber = parseInt(lastOrder.orderId);
+    } else {
+      // Optional fallback: get max with aggregation in case of gaps
+      const maxResult = await Order.aggregate([
+        {
+          $group: {
+            _id: null,
+            maxOrderId: { $max: { $toInt: "$orderId" } },
+          },
+        },
+      ]);
+
+      lastOrderNumber = maxResult[0]?.maxOrderId || 0;
+    }
+
+    const currentOrderId = lastOrderNumber + 1;
 
     if (status === true) {
       const newOrder = new Order({
-        orderId,
+        orderId: currentOrderId.toString(),
         status: true,
       });
 
       await newOrder.save();
-      orderCount++; // Increment only when saved
     }
 
     return successResponse(res, 200, "Order processed", {
-      orderId,
+      orderId: currentOrderId,
       created: status === true,
-      nextOrderId: `KPCM-${orderCount + 1}`,
+      nextOrderId: currentOrderId + 1,
     });
   } catch (error) {
     console.error("Error creating order:", error.message);
@@ -34,10 +53,6 @@ async function create(req, res) {
       "An error occurred while processing your request"
     );
   }
-}
-
-function generateOrderId() {
-  return `KPCM-${orderCount + 1}`;
 }
 
 module.exports = create;

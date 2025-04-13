@@ -5,8 +5,6 @@ const orderSchema = new Schema(
   {
     orderId: {
       type: String,
-      unique: true,
-      required: true,
     },
     status: {
       type: Boolean,
