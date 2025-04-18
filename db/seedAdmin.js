@@ -1,5 +1,8 @@
-const createAdmin = require("../services/createAdminService");
-const importUsers = require("../services/importUserService");
+// const createAdmin = require("../services/createAdminService");
+// const importUsers = require("../services/importUserService");
+const getAccessToken = require("../services/getAccessTokenService");
+const importCustomers = require("../services/importCustomerService");
+const importSalespersons = require("../services/importSalespersonService");
 const dbConnection = require("../db/Connection");
 const mongoose = require("mongoose");
 
@@ -9,10 +12,19 @@ const seedAdmin = async () => {
     await dbConnection();
 
     console.log("Creating admin...");
-    await createAdmin();
+    // await createAdmin();
 
     console.log("Importing users...");
-    await importUsers();
+    // await importUsers();
+
+    console.log("Generating Access Token...");
+    await getAccessToken();
+
+    console.log("Importing Customers...");
+    await importCustomers();
+
+    console.log("Importing Salespersons...");
+    await importSalespersons();
 
     console.log("Seeding process completed successfully.");
   } catch (error) {

@@ -33,7 +33,7 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "employee"],
+      enum: ["admin", "employee", "salesPerson", "customer"],
     },
     reset_password_otp: {
       type: String,
