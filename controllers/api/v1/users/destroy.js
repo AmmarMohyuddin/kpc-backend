@@ -1,4 +1,5 @@
 const User = require("../../../../models/user");
+const SalesPerson = require("../../../../models/salesperson");
 const {
   successResponse,
   errorResponse,
@@ -13,10 +14,21 @@ async function destroy(req, res) {
     if (!user) {
       return errorResponse(res, 404, "User not found");
     }
-    await User.findByIdAndDelete(id);
+
+    const personNumber = user.person_number;
+
+    await user.deleteOne();
+
+    if (personNumber) {
+      await SalesPerson.updateOne(
+        { person_number: personNumber },
+        { $set: { registered: false } }
+      );
+    }
+
     return successResponse(res, 200, "User deleted successfully", {});
   } catch (error) {
-    console.error("Error deleting user:", error.message, error.stack);
+    console.error("Error deleting user:", error);
     return errorResponse(res, 500, "Internal server error");
   }
 }
