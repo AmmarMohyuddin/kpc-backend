@@ -4,16 +4,16 @@ const {
   errorResponse,
 } = require("../../../../utils/response");
 
-async function list(req, res) {
+async function deactivateUsersList(req, res) {
   try {
     const users = await User.find({
       role: { $ne: "admin" },
-      deactivated: false,
+      deactivated: true,
     }).select("-password -authenticationToken -password_text");
-    return successResponse(res, 200, "Users list", users);
+    return successResponse(res, 200, "Deactivate User's list", users);
   } catch (error) {
     console.error("Error getting users:", error.message, error.stack);
     return errorResponse(res, 500, "Internal server error");
   }
 }
-module.exports = list;
+module.exports = deactivateUsersList;

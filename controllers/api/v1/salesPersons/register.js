@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const importUser = require("../../../../models/importUser");
 const User = require("../../../../models/user");
 const salesPerson = require("../../../../models/salesperson");
@@ -8,8 +9,12 @@ const {
 } = require("../../../../utils/response");
 const sendMail = require("../../../../utils/mailer");
 
+function generateRandomPassword(length = 10) {
+  return crypto.randomBytes(length).toString("base64").slice(0, length);
+}
+
 async function register(req, res) {
-  const { full_name, person_number, email, password } = req.body;
+  const { full_name, person_number, email } = req.body;
 
   try {
     const existingImportUser = await importUser.findOne({ person_number });
@@ -36,13 +41,14 @@ async function register(req, res) {
       return errorResponse(res, 409, "User is already registered.");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const generatedPassword = generateRandomPassword(12);
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
     const newUser = await User.create({
       person_number,
       email,
       password: hashedPassword,
-      password_text: password,
+      password_text: generatedPassword,
       full_name,
       role: "salesPerson",
     });
@@ -62,8 +68,8 @@ async function register(req, res) {
         await sendMail({
           to: newUser.email,
           subject: "Welcome to KPC - Your Account is Created",
-          text: `Hi ${newUser.full_name},\n\nWelcome to KPC! Your account has been successfully created. Here are your login details:\n\nEmail: ${newUser.email}\nPassword: ${password}\n\nPlease keep your credentials secure.`,
-          html: `<p>Hi <strong>${newUser.full_name}</strong>,</p><p>Welcome to KPC! Your account has been successfully created. Here are your login details:</p><p><strong>Email:</strong> ${newUser.email}</p><p><strong>Password:</strong> ${password}</p><p>Please keep your credentials secure.</p><p>Best regards,<br>KPC-Kuwait Paint Company</p>`,
+          text: `Hi ${newUser.full_name},\n\nWelcome to KPC! Your account has been successfully created. Here are your login details:\n\nEmail: ${newUser.email}\nPassword: ${generatedPassword}\n\nPlease keep your credentials secure.`,
+          html: `<p>Hi <strong>${newUser.full_name}</strong>,</p><p>Welcome to KPC! Your account has been successfully created. Here are your login details:</p><p><strong>Email:</strong> ${newUser.email}</p><p><strong>Password:</strong> ${generatedPassword}</p><p>Please keep your credentials secure.</p><p>Best regards,<br>KPC-Kuwait Paint Company</p>`,
         });
       } catch (err) {
         console.error("Failed to send email:", err.message);

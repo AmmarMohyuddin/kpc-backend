@@ -5,6 +5,8 @@ const detail = require("./detail");
 const update = require("./update");
 const destroy = require("./destroy");
 const approveUser = require("./approveUser");
+const deactivate = require("./deactivate");
+const deactivateUsersList = require("./deactivateUsersList");
 
 module.exports = {
   signUp,
@@ -14,4 +16,6 @@ module.exports = {
   update,
   destroy,
   approveUser,
+  deactivate,
+  deactivateUsersList,
 };

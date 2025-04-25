@@ -41,6 +41,32 @@ const userSchema = new Schema(
     reset_password_expires: {
       type: Date,
     },
+    deactivated: {
+      type: Boolean,
+      default: false,
+    },
+    customer_account_no: {
+      type: String,
+    },
+    customer_address: {
+      type: String,
+    },
+    contact_number: {
+      type: String,
+    },
+    contact_person: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    shipping_address: {
+      type: String,
+    },
+    sales_person: {
+      type: Schema.Types.ObjectId,
+      ref: "SalesPerson",
+    },
   },
   {
     timestamps: true,
