@@ -6,17 +6,25 @@ const {
 } = require("../../../../utils/response");
 
 async function signIn(req, res) {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
+
+  if (!role) {
+    return errorResponse(res, 400, "Role is required.");
+  }
 
   if (!email || !password) {
     return errorResponse(res, 400, "Email and password are required.");
   }
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate("sales_person");
 
     if (!user) {
       return errorResponse(res, 400, "Email is incorrect.");
+    }
+
+    if (user.role !== role) {
+      return errorResponse(res, 403, `Access denied for role '${role}'.`);
     }
 
     if (!user.is_approved) {

@@ -65,7 +65,7 @@ const userSchema = new Schema(
     },
     sales_person: {
       type: Schema.Types.ObjectId,
-      ref: "SalesPerson",
+      ref: "Salesperson",
     },
   },
   {
