@@ -17,7 +17,15 @@ async function signIn(req, res) {
   }
 
   try {
-    const user = await User.findOne({ email }).populate("sales_person");
+    let query = User.findOne({ email });
+
+    if (role === "customer") {
+      query = query.populate("customer").populate("sales_person");
+    } else if (role === "salesPerson") {
+      query = query.populate("sales_person");
+    }
+
+    const user = await query;
 
     if (!user) {
       return errorResponse(res, 400, "Email is incorrect.");
