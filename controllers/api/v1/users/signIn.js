@@ -6,10 +6,10 @@ const {
 } = require("../../../../utils/response");
 
 async function signIn(req, res) {
-  const { email, password, role } = req.body;
+  let { email, password, role } = req.body;
 
   if (!role) {
-    return errorResponse(res, 400, "Role is required.");
+    role = "admin";
   }
 
   if (!email || !password) {
