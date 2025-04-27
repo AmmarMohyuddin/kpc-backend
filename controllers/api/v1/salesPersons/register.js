@@ -17,6 +17,11 @@ async function register(req, res) {
   const { full_name, person_number, email } = req.body;
 
   try {
+    const salesPersonDoc = await salesPerson.findOne({ person_number });
+    if (!salesPersonDoc) {
+      return errorResponse(res, 404, "Sales person not found.");
+    }
+
     const existingImportUser = await importUser.findOne({ person_number });
 
     if (!existingImportUser) {
@@ -51,6 +56,7 @@ async function register(req, res) {
       password_text: generatedPassword,
       full_name,
       role: "salesPerson",
+      sales_person: salesPersonDoc._id,
     });
 
     await salesPerson.updateOne(

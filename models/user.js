@@ -63,6 +63,10 @@ const userSchema = new Schema(
     shipping_address: {
       type: String,
     },
+    customer: {
+      type: Schema.Types.ObjectId,
+      ref: "Customer",
+    },
     sales_person: {
       type: Schema.Types.ObjectId,
       ref: "Salesperson",

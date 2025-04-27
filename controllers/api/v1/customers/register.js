@@ -58,9 +58,20 @@ async function register(req, res) {
       password: hashedPassword,
       password_text: generatedPassword,
       role: "customer",
+      customer: customer_id,
     });
 
     await newUser.save();
+
+    await Customer.updateOne(
+      { _id: customer_id },
+      {
+        $set: {
+          registered: true,
+          registered_date: new Date(),
+        },
+      }
+    );
 
     setImmediate(async () => {
       try {
@@ -87,6 +98,7 @@ async function register(req, res) {
       customer_account_no: newUser.customer_account_no,
       customer_address: newUser.customer_address,
       sales_person: newUser.sales_person,
+      customer: newUser.customer,
     };
 
     return successResponse(
