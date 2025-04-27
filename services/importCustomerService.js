@@ -5,7 +5,7 @@ const Customer = require("../models/customer");
 const getAccessToken = require("./getAccessTokenService");
 
 const API_URL =
-  "https://g3ef73baddaf774-babxdb.adb.eu-frankfurt-1.oraclecloudapps.com/ords/bintg/KPCCustomerApp/getCustomers";
+  "https://g3ef73baddaf774-babxdb.adb.eu-frankfurt-1.oraclecloudapps.com/ords/bintg/KPCCustomerApp/getCustomers?limit=10000";
 
 async function importCustomers() {
   try {
@@ -27,7 +27,9 @@ async function importCustomers() {
     let insertedCount = 0;
 
     for (const customer of data.items) {
-      const exists = await Customer.findOne({ party_id: customer.party_id });
+      const exists = await Customer.findOne({
+        party_site_id: customer.party_site_id,
+      });
       if (!exists) {
         await Customer.create(customer);
         insertedCount++;
