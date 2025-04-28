@@ -17,7 +17,9 @@ async function register(req, res) {
   const { full_name, person_number, email } = req.body;
 
   try {
-    const salesPersonDoc = await salesPerson.findOne({ person_number });
+    const salesPersonDoc = await salesPerson.findOne({
+      employee_number: person_number,
+    });
     if (!salesPersonDoc) {
       return errorResponse(res, 404, "Sales person not found.");
     }
@@ -60,7 +62,7 @@ async function register(req, res) {
     });
 
     await salesPerson.updateOne(
-      { person_number },
+      { employee_number: person_number },
       {
         $set: {
           registered: true,

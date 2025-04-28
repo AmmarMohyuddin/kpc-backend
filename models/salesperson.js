@@ -3,9 +3,9 @@ const { Schema } = mongoose;
 
 const salespersonSchema = new Schema(
   {
-    sales_person_id: { type: Number },
-    party_name: { type: String },
-    person_number: { type: String },
+    salesperson_id: { type: String },
+    salesperson_name: { type: String },
+    employee_number: { type: String },
     registered: { type: Boolean, default: false },
     registered_date: { type: Date },
     last_update_date: { type: String },

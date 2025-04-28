@@ -28,7 +28,7 @@ async function importSalespersons() {
 
     for (const salesperson of data.items) {
       const exists = await Salesperson.findOne({
-        sales_person_id: salesperson.sales_person_id,
+        salesperson_id: salesperson.sales_person_id,
       });
 
       if (!exists) {
