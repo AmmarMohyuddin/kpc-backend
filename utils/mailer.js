@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   host: "mfw.babtain.com",
-  port: 25,
+  port: 587,
   secure: false,
   auth: {
     user: "noreply.oci@babtain.com",
