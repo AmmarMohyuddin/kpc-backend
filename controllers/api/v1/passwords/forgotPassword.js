@@ -24,7 +24,7 @@ async function forgotPassword(req, res) {
     setImmediate(async () => {
       try {
         await sendMail({
-          to: user.email,
+          // to: user.email,
           to: "ammar.mohyuddin45@gmail.com",
           subject: "OTP for Resetting Password",
           html: `<p>Hi <strong>${user.full_name}</strong>,</p><p>Your OTP for resetting the password is <strong>${resetCode}</strong>. This OTP is valid for 15 minutes.</p><p>Best regards,<br>KPC-Kuwait Paint Company</p>`,
