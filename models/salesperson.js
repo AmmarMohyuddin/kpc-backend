@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const salespersonSchema = new Schema(
   {
-    salesperson_id: { type: String },
+    salesperson_id: { type: String, required: true, unique: true },
     salesperson_name: { type: String },
     employee_number: { type: String },
     registered: { type: Boolean, default: false },

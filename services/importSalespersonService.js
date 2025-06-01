@@ -19,7 +19,7 @@ async function importSalespersons() {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-
+    console.log("Data fetched from API:", data);
     if (!data.items || !Array.isArray(data.items)) {
       throw new Error("Invalid response format from API.");
     }
@@ -28,7 +28,7 @@ async function importSalespersons() {
 
     for (const salesperson of data.items) {
       const exists = await Salesperson.findOne({
-        salesperson_id: salesperson.sales_person_id,
+        salesperson_id: salesperson.salesperson_id,
       });
 
       if (!exists) {

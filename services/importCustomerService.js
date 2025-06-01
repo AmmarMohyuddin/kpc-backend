@@ -39,8 +39,6 @@ async function importCustomers() {
     console.log(`${insertedCount} new customers saved successfully.`);
   } catch (error) {
     console.error("Error fetching customers:", error.message || error);
-  } finally {
-    mongoose.connection.close();
   }
 }
 
