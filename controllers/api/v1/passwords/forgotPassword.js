@@ -16,7 +16,7 @@ async function forgotPassword(req, res) {
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-
+    console.log("Generated OTP:", resetCode);
     user.reset_password_otp = resetCode;
     user.reset_password_expires = Date.now() + 15 * 60 * 1000;
     await user.save();
