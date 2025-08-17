@@ -15,6 +15,7 @@ const customerSchema = new Schema(
     address_line_1: { type: String },
     address_line_2: { type: String },
     address_line_3: { type: String },
+    payment_term: { type: String },
     registered: { type: Boolean, default: false },
     registered_date: { type: Date },
   },

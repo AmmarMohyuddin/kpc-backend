@@ -8,7 +8,12 @@ const order = require("./order");
 const orderLine = require("./orderLine");
 const salesPerson = require("./salesPerson");
 const customer = require("./customer");
+const item = require("./item");
 const lead = require("./lead");
+const price = require("./price");
+const salesRequest = require("./salesRequest");
+const city = require("./city");
+const block = require("./block");
 
 router.use("/users", users);
 router.use("/password", password);
@@ -17,6 +22,11 @@ router.use("/orders", order);
 router.use("/orderLine", orderLine);
 router.use("/salesPersons", salesPerson);
 router.use("/customers", customer);
+router.use("/prices", price);
+router.use("/items", item);
 router.use("/leads", lead);
+router.use("/salesRequests", salesRequest);
+router.use("/cities", city);
+router.use("/blocks", block);
 
 module.exports = router;
