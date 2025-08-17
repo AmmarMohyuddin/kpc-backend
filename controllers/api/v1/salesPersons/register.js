@@ -15,6 +15,11 @@ function generateRandomPassword(length = 10) {
 
 async function register(req, res) {
   const { full_name, person_number, email } = req.body;
+  console.log("Registering user with data:", {
+    full_name,
+    person_number,
+    email,
+  });
 
   try {
     const salesPersonDoc = await salesPerson.findOne({
