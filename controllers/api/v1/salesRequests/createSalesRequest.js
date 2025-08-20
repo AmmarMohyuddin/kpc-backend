@@ -54,7 +54,7 @@ async function createSalesRequest(req, res) {
     console.log("🚀 Starting createSalesRequest API...");
     console.log("📩 Incoming body:", req.body);
 
-    const { customer_id } = req.body;
+    const { customer_id, status } = req.body;
     if (!customer_id) {
       console.log("❌ Customer ID missing");
       return errorResponse(res, 400, "Customer ID is required");
@@ -184,7 +184,7 @@ async function createSalesRequest(req, res) {
       customer_account_number: orderDetail.account_number,
       address_line_1: orderDetail.address,
       approval_status: "Pending",
-      order_status: "pending",
+      order_status: status,
       salesperson: orderDetail.salesperson_name,
       payment_term: orderDetail.payment_term,
       creation_date: currentDate,
