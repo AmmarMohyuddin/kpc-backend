@@ -14,6 +14,7 @@ const price = require("./price");
 const salesRequest = require("./salesRequest");
 const city = require("./city");
 const block = require("./block");
+const salesOrder = require("./salesOrder");
 
 router.use("/users", users);
 router.use("/password", password);
@@ -23,6 +24,7 @@ router.use("/orderLine", orderLine);
 router.use("/salesPersons", salesPerson);
 router.use("/customers", customer);
 router.use("/prices", price);
+router.use("/salesOrders", salesOrder);
 router.use("/items", item);
 router.use("/leads", lead);
 router.use("/salesRequests", salesRequest);
