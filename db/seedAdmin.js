@@ -7,6 +7,7 @@ const importCustomers = require("../services/importCustomerService");
 const importItems = require("../services/importItemService");
 const importPrices = require("../services/importPriceService");
 const importSalespersons = require("../services/importSalespersonService");
+const importSources = require("../services/importSourceService");
 const dbConnection = require("../db/Connection");
 const mongoose = require("mongoose");
 
@@ -18,29 +19,32 @@ const seedAdmin = async () => {
     console.log("Creating admin...");
     // await createAdmin();
 
-    console.log("Importing users...");
-    await importUsers();
+    // console.log("Importing users...");
+    // await importUsers();
 
-    console.log("Generating Access Token...");
-    await getAccessToken();
+    // console.log("Generating Access Token...");
+    // await getAccessToken();
 
-    console.log("Importing Customers...");
-    await importCustomers();
+    // console.log("Importing Customers...");
+    // await importCustomers();
 
-    console.log("Importing Items...");
-    await importItems();
+    // console.log("Importing Items...");
+    // await importItems();
 
-    console.log("Importing Prices...");
-    await importPrices();
+    // console.log("Importing Prices...");
+    // await importPrices();
 
-    console.log("Importing Cities...");
-    await importCities();
+    // console.log("Importing Cities...");
+    // await importCities();
 
-    console.log("Importing Blocks...");
-    await importBlocks();
+    // console.log("Importing Blocks...");
+    // await importBlocks();
 
-    console.log("Importing Salespersons...");
-    await importSalespersons();
+    // console.log("Importing Salespersons...");
+    // await importSalespersons();
+
+    console.log("Importing Sources...");
+    await importSources();
 
     console.log("Seeding process completed successfully.");
   } catch (error) {

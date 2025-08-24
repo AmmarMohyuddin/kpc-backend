@@ -15,6 +15,7 @@ const salesRequest = require("./salesRequest");
 const city = require("./city");
 const block = require("./block");
 const salesOrder = require("./salesOrder");
+const leadSource = require("./leadSource");
 
 router.use("/users", users);
 router.use("/password", password);
@@ -30,5 +31,6 @@ router.use("/leads", lead);
 router.use("/salesRequests", salesRequest);
 router.use("/cities", city);
 router.use("/blocks", block);
+router.use("/leadSources", leadSource);
 
 module.exports = router;
