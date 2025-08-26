@@ -9,8 +9,11 @@ const getAccessToken = require("../../../../services/getAccessTokenService");
 const API_BASE_URL =
   "https://g3ef73baddaf774-babxdb.adb.eu-frankfurt-1.oraclecloudapps.com/ords/bintg/KPCCustomerApp";
 
-async function listOpportunities(req, res) {
+async function detailOpportunity(req, res) {
   try {
+    const { id } = req.params;
+    if (!id) return errorResponse(res, 400, "Opportunity ID is required");
+
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
     if (!accessToken) {
@@ -19,7 +22,7 @@ async function listOpportunities(req, res) {
 
     // 2️⃣ Call Oracle API
     const response = await axios.get(
-      `${API_BASE_URL}/getOpportunity?limit=10000`,
+      `${API_BASE_URL}/getOpportunity?OPPORTUNITY_ID=${id}&limit=10000`,
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
@@ -37,7 +40,7 @@ async function listOpportunities(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 🔄 Collect all ITEM_IDs across all opportunities
+    // 🔄 Collect all ITEM_IDs across opportunities
     const allItemIds = opportunities.flatMap((opp) =>
       opp.ORDER_LINES ? opp.ORDER_LINES.map((line) => line.ITEM_ID) : []
     );
@@ -49,7 +52,7 @@ async function listOpportunities(req, res) {
         { sub_cat: 1, item_number: 1, item_detail: 1, inventory_item_id: 1 }
       );
 
-      // Build lookup map { ITEM_ID: itemDetails }
+      // Build lookup map { ITEM_ID: details }
       const itemMap = items.reduce((acc, item) => {
         acc[item.inventory_item_id] = item;
         return acc;
@@ -75,15 +78,15 @@ async function listOpportunities(req, res) {
       });
     }
 
-    // 6️⃣ Return structured response
+    // 6️⃣ Return clean response
     return successResponse(
       res,
       200,
-      "Opportunities fetched successfully",
+      "Opportunity details fetched successfully",
       opportunities
     );
   } catch (error) {
-    console.error("❌ Error fetching opportunities:", error.message);
+    console.error("❌ Error fetching opportunity details:", error.message);
 
     if (error.response) {
       return errorResponse(
@@ -97,4 +100,4 @@ async function listOpportunities(req, res) {
   }
 }
 
-module.exports = listOpportunities;
+module.exports = detailOpportunity;
