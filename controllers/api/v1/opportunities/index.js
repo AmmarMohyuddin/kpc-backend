@@ -3,6 +3,7 @@ const createOpportunity = require("./createOpportunity");
 const detailOpportunity = require("./detailOpportunity");
 const deleteOpportunity = require("./deleteOpportunity");
 const editOpportunity = require("./editOpportunity");
+const createFollowup = require("./createFollowup");
 
 module.exports = {
   listOpportunities,
@@ -10,4 +11,5 @@ module.exports = {
   detailOpportunity,
   editOpportunity,
   deleteOpportunity,
+  createFollowup,
 };
