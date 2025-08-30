@@ -5,6 +5,7 @@ const {
 } = require("../../../../utils/response");
 const getAccessToken = require("../../../../services/getAccessTokenService");
 const Item = require("../../../../models/item");
+const salesPerson = require("../../../../models/salesperson");
 
 const API_BASE_URL =
   "https://g3ef73baddaf774-babxdb.adb.eu-frankfurt-1.oraclecloudapps.com/ords/bintg/KPCCustomerApp";
@@ -27,6 +28,10 @@ async function createOpportunity(req, res) {
 
     let headerRes = null;
 
+    const salesPersonObj = await salesPerson.findOne({
+      salesperson_name: opportunityData.salesperson_name,
+    });
+
     // 1️⃣ If NO opportunity_id → Create header
     if (!opportunityHeaderId) {
       const headerPayload = {
@@ -34,10 +39,11 @@ async function createOpportunity(req, res) {
         close_date: opportunityData.close_date,
         stage: "Initiation",
         status_id: opportunityData.status_id,
-        salesperson_name: opportunityData.salesperson_name,
+        salesperson: salesPersonObj.salesperson_name,
+        // salesperson_id: salesPersonObj.salesperson_id,
         remarks: opportunityData.remarks,
-        created_by: opportunityData.salesperson_name,
-        last_updated_by: opportunityData.salesperson_name,
+        created_by: salesPersonObj.salesperson_name,
+        last_updated_by: salesPersonObj.salesperson_name,
         creation_date: opportunityData.generation_date,
         last_update_date: opportunityData.generation_date,
       };
