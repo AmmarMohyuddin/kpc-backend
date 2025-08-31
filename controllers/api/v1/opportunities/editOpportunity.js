@@ -5,6 +5,7 @@ const {
 } = require("../../../../utils/response");
 const getAccessToken = require("../../../../services/getAccessTokenService");
 const Item = require("../../../../models/item");
+const salesPerson = require("../../../../models/salesperson");
 
 const API_BASE_URL =
   "https://g3ef73baddaf774-babxdb.adb.eu-frankfurt-1.oraclecloudapps.com/ords/bintg/KPCCustomerApp";
@@ -16,11 +17,31 @@ function formatIsoDate(date = new Date()) {
   )}`;
 }
 
+// Helper function to get status ID from status name
+async function getStatusId(statusName, accessToken) {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/getCRMStatusLookup`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    const statuses = res.data?.items || [];
+    const statusObj = statuses.find(
+      (s) => s.status?.toLowerCase() === statusName?.toLowerCase()
+    );
+    console.log("Status Lookup:", statuses);
+    console.log("Status Name:", statusObj);
+    return statusObj ? statusObj.status_id : null;
+  } catch (err) {
+    console.error("❌ Error fetching status lookup:", err.message);
+    return null;
+  }
+}
+
 async function editOpportunity(req, res) {
   try {
     console.log("🚀 Starting editOpportunity API...");
     const opportunityData = req.body;
-
+    console.log("Opportunity Data:", opportunityData);
     const accessToken = await getAccessToken();
     if (!accessToken) throw new Error("Failed to retrieve access token");
 
@@ -77,19 +98,38 @@ async function editOpportunity(req, res) {
       opportunityData.status ||
       opportunityData.salesperson_id ||
       opportunityData.salesperson_name ||
-      opportunityData.remarks
+      opportunityData.remarks ||
+      opportunityData.stage
     ) {
+      const salesPersonObj = await salesPerson.findOne({
+        _id: opportunityData.salesperson_id,
+      });
+      console.log("Sales Person:", salesPersonObj);
+
+      // Get status ID from status name
+      let statusId = null;
+      if (opportunityData.status) {
+        statusId = await getStatusId(opportunityData.status, accessToken);
+        if (!statusId) {
+          console.warn(
+            `⚠️ Status ID not found for status: ${opportunityData.status}`
+          );
+        }
+      }
+
       const headerPayload = {
         OPPORTUNITY_ID: opportunityHeaderId,
         GENERATION_DATE: opportunityData.generation_date,
         STAGE: opportunityData.stage || "Initiation",
         CLOSE_DATE: opportunityData.close_date,
-        STATUS_ID: opportunityData.status,
-        SALESPERSON_ID: opportunityData.salesperson_id,
+        STATUS_ID: statusId, // Use found status ID or default
+        // STATUS: opportunityData.status,
+        SALESPERSON_ID: salesPersonObj?.salesperson_id || "",
         REMARKS: opportunityData.remarks,
         CREATED_BY: opportunityData.salesperson_name || "system",
         LAST_UPDATED_BY: opportunityData.salesperson_name || "system",
       };
+
       console.log("📤 Updating Header payload:", headerPayload);
       headerRes = await axios.post(
         `${API_BASE_URL}/updateOpportunityHeader`,
@@ -108,7 +148,7 @@ async function editOpportunity(req, res) {
     return successResponse(res, 200, {
       message: "Opportunity updated successfully",
       header: headerRes ? headerRes.data : null,
-      detail: detailRes ? detailRes.data : null,
+      detail: detailRes ? headerRes.data : null,
     });
   } catch (error) {
     console.error(

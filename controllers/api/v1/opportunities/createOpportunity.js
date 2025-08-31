@@ -35,12 +35,13 @@ async function createOpportunity(req, res) {
     // 1️⃣ If NO opportunity_id → Create header
     if (!opportunityHeaderId) {
       const headerPayload = {
+        lead_id: opportunityData.lead_id,
         generation_date: opportunityData.generation_date,
         close_date: opportunityData.close_date,
         stage: "Initiation",
-        status_id: opportunityData.status_id,
+        status_id: 101,
         salesperson: salesPersonObj.salesperson_name,
-        // salesperson_id: salesPersonObj.salesperson_id,
+        salesperson_id: salesPersonObj.salesperson_id,
         remarks: opportunityData.remarks,
         created_by: salesPersonObj.salesperson_name,
         last_updated_by: salesPersonObj.salesperson_name,

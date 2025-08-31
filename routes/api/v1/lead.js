@@ -9,6 +9,7 @@ const {
   updateLead,
   createFollowup,
   listFollowup,
+  getStatus,
 } = require("../../../controllers/api/v1/leads");
 
 router.post("/create", create);
@@ -18,5 +19,6 @@ router.post("/createFollowup", createFollowup);
 router.get("/detailLead", detailLead);
 router.put("/updateLead", updateLead);
 router.get("/listFollowup", listFollowup);
+router.get("/getStatus", getStatus);
 
 module.exports = router;

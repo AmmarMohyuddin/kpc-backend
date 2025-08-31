@@ -34,6 +34,7 @@ async function updateLead(req, res) {
       customer_email,
       contact_position,
       source,
+      stage,
       status,
       salesperson_id,
       salesperson_name,
@@ -54,12 +55,9 @@ async function updateLead(req, res) {
     let oracleSalespersonId = "";
     if (salesperson_id) {
       try {
-        const salesPersonObj = await salesPerson
-          .findById(salesperson_id)
-          .select({
-            salesperson_id: 1,
-            _id: 0,
-          });
+        const salesPersonObj = await salesPerson.findOne({
+          salesperson_id: salesperson_id,
+        });
         console.log("👤 Mapped salesperson ID:", salesPersonObj);
         oracleSalespersonId = salesPersonObj?.salesperson_id || "";
       } catch (error) {
@@ -79,6 +77,7 @@ async function updateLead(req, res) {
       CONTACT_NUMBER: contact_number,
       EMAIL_ADDRESS: customer_email,
       CONTACT_POSITION: contact_position || "",
+      STAGE: stage || "",
       SOURCE: source || "",
       STATUS_ID: 1,
       STATUS: status,

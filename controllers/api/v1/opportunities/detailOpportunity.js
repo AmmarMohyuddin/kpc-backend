@@ -4,6 +4,7 @@ const {
   errorResponse,
 } = require("../../../../utils/response");
 const Item = require("../../../../models/item");
+const salesPerson = require("../../../../models/salesperson");
 const getAccessToken = require("../../../../services/getAccessTokenService");
 
 const API_BASE_URL =
@@ -45,38 +46,55 @@ async function detailOpportunity(req, res) {
       opp.ORDER_LINES ? opp.ORDER_LINES.map((line) => line.ITEM_ID) : []
     );
 
+    // 4️⃣ Fetch all items in one go
+    let itemMap = {};
     if (allItemIds.length > 0) {
-      // 4️⃣ Fetch all items in one go
       const items = await Item.find(
         { inventory_item_id: { $in: allItemIds } },
         { sub_cat: 1, item_number: 1, item_detail: 1, inventory_item_id: 1 }
       );
 
-      // Build lookup map { ITEM_ID: details }
-      const itemMap = items.reduce((acc, item) => {
+      itemMap = items.reduce((acc, item) => {
         acc[item.inventory_item_id] = item;
         return acc;
       }, {});
-
-      // 5️⃣ Enrich opportunities
-      opportunities = opportunities.map((opp) => {
-        if (!opp.ORDER_LINES) return opp;
-
-        const enrichedLines = opp.ORDER_LINES.map((line) => {
-          const itemDetails = itemMap[line.ITEM_ID];
-          return itemDetails
-            ? {
-                ...line,
-                SUB_CAT: itemDetails.sub_cat,
-                ITEM_DETAIL: itemDetails.item_detail,
-                ITEM_NUMBER: itemDetails.item_number,
-              }
-            : line;
-        });
-
-        return { ...opp, ORDER_LINES: enrichedLines };
-      });
     }
+
+    // 5️⃣ Enrich opportunities
+    opportunities = await Promise.all(
+      opportunities.map(async (opp) => {
+        // Attach item details
+        let enrichedLines = opp.ORDER_LINES || [];
+        if (opp.ORDER_LINES) {
+          enrichedLines = opp.ORDER_LINES.map((line) => {
+            const itemDetails = itemMap[line.ITEM_ID];
+            return itemDetails
+              ? {
+                  ...line,
+                  SUB_CAT: itemDetails.sub_cat,
+                  ITEM_DETAIL: itemDetails.item_detail,
+                  ITEM_NUMBER: itemDetails.item_number,
+                }
+              : line;
+          });
+        }
+
+        // Attach SALESPERSON_ID from local DB
+        let salespersonId = null;
+        if (opp.SALESPERSON_NAME) {
+          const salesPersonObj = await salesPerson.findOne({
+            salesperson_name: opp.SALESPERSON_NAME,
+          });
+          salespersonId = salesPersonObj?.salesperson_id || null;
+        }
+
+        return {
+          ...opp,
+          ORDER_LINES: enrichedLines,
+          SALESPERSON_ID: salespersonId,
+        };
+      })
+    );
 
     // 6️⃣ Return clean response
     return successResponse(
