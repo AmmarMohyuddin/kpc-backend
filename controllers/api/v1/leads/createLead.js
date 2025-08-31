@@ -17,6 +17,35 @@ function formatIsoDate(date = new Date()) {
   )}`;
 }
 
+// Helper: Fetch status_id & stage from CRM
+async function getStatusDetails(statusName, accessToken) {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/getCRMStatusLookup`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    const statuses = res.data?.items || [];
+    console.log("🔎 Status Lookup:", statuses);
+
+    const statusObj = statuses.find(
+      (s) => s.status?.toLowerCase() === statusName?.toLowerCase()
+    );
+
+    if (!statusObj) {
+      console.warn(`⚠️ No status found for: ${statusName}`);
+      return { status_id: null, stage: null };
+    }
+
+    return {
+      status_id: statusObj.status_id,
+      stage: statusObj.stage || null,
+    };
+  } catch (err) {
+    console.error("❌ Error fetching status lookup:", err.message);
+    return { status_id: null, stage: null };
+  }
+}
+
 async function createLead(req, res) {
   let accessToken;
   try {
@@ -33,23 +62,27 @@ async function createLead(req, res) {
       customer_email,
       contact_position,
       source,
-      status,
+      status = "New", // default
       salesperson_id,
       salesperson_name,
     } = req.body;
 
+    // 🔑 Get access token
     console.log("🔑 Getting access token...");
     accessToken = await getAccessToken();
-    console.log("✅ Access token received:", accessToken ? "YES" : "NO");
     if (!accessToken) throw new Error("Failed to retrieve access token");
 
     const currentDate = formatIsoDate();
 
+    // 🔹 Map salesperson_id from DB
     const salesPersonObj = await salesPerson.findById(salesperson_id).select({
       salesperson_id: 1,
       _id: 0,
     });
     console.log("👤 Mapped salesperson ID:", salesPersonObj);
+
+    // 🔹 Get Status ID & Stage from CRM
+    const { status_id, stage } = await getStatusDetails(status, accessToken);
 
     // Prepare lead payload
     const leadPayload = {
@@ -63,11 +96,12 @@ async function createLead(req, res) {
       email_address: customer_email,
       contact_position: contact_position || "",
       source: source || "",
-      status_id: 1,
-      status: status || "New",
+      status_id: status_id || 1, // fallback to 1 if not found
+      status,
+      stage: stage || "Initiation", // fallback if missing
       salesperson_name: salesperson_name || "",
       created_by: salesperson_name || "",
-      salesperson_id: salesPersonObj.salesperson_id || "",
+      salesperson_id: salesPersonObj?.salesperson_id || "",
       last_updated_by: salesperson_name || "",
       creation_date: currentDate,
       last_update_date: currentDate,
@@ -88,9 +122,7 @@ async function createLead(req, res) {
     );
 
     console.log("📥 API response:", response.status, response.statusText);
-    console.log("✅ Lead created successfully:", response.data);
 
-    // Check if the API call was successful
     if (response && response.status === 200) {
       return successResponse(
         res,
@@ -111,7 +143,6 @@ async function createLead(req, res) {
       error.response?.data || error.message
     );
 
-    // Provide more specific error messages
     if (error.response) {
       return errorResponse(
         res,

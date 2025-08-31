@@ -148,7 +148,7 @@ async function editOpportunity(req, res) {
     return successResponse(res, 200, {
       message: "Opportunity updated successfully",
       header: headerRes ? headerRes.data : null,
-      detail: detailRes ? headerRes.data : null,
+      detail: detailRes ? detailRes.data : null,
     });
   } catch (error) {
     console.error(
