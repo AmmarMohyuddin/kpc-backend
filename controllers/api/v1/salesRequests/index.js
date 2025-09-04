@@ -9,6 +9,7 @@ const listSalesRequest = require("./listSalesRequest");
 const draftSalesRequest = require("./draftSalesRequest");
 const editSalesRequest = require("./editSalesRequest");
 const deleteSalesRequest = require("./deleteSalesRequest");
+const salesChart = require("./salesChart");
 
 module.exports = {
   create,
@@ -23,4 +24,5 @@ module.exports = {
   deleteSalesRequest,
   deleteItem,
   updateItem,
+  salesChart,
 };

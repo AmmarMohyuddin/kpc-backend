@@ -13,6 +13,7 @@ const {
   draftSalesRequest,
   editSalesRequest,
   deleteSalesRequest,
+  salesChart,
 } = require("../../../controllers/api/v1/salesRequests");
 
 router.post("/create", create);
@@ -26,5 +27,6 @@ router.post("/detail-sales-request", detailSalesRequest);
 router.get("/draft-sales-request", draftSalesRequest);
 router.post("/edit-sales-request", editSalesRequest);
 router.post("/delete-sales-request", deleteSalesRequest);
+router.get("/sales-chart", salesChart);
 
 module.exports = router;

@@ -6,6 +6,7 @@ const updateLead = require("./updateLead");
 const createFollowup = require("./createFollowup");
 const listFollowup = require("./listFollowup");
 const getStatus = require("./getStatus");
+const leadChart = require("./leadChart");
 
 module.exports = {
   create,
@@ -16,4 +17,5 @@ module.exports = {
   detailLead,
   createFollowup,
   getStatus,
+  leadChart,
 };

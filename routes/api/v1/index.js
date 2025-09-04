@@ -17,11 +17,13 @@ const block = require("./block");
 const salesOrder = require("./salesOrder");
 const leadSource = require("./leadSource");
 const opportunities = require("./opportunities");
+const notifications = require("./notification");
 
 router.use("/users", users);
 router.use("/password", password);
 router.use("/importUsers", importUser);
 router.use("/orders", order);
+router.use("/notifications", notifications);
 router.use("/orderLine", orderLine);
 router.use("/salesPersons", salesPerson);
 router.use("/customers", customer);
