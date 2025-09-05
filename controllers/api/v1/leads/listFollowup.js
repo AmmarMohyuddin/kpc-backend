@@ -12,30 +12,43 @@ async function listFollow(req, res) {
   try {
     console.log("🚀 Starting listFollow API...");
 
+    // Extract pagination parameters from query string
+    const { limit = 10, offset = 0 } = req.query;
+    const limitInt = parseInt(limit);
+    const offsetInt = parseInt(offset);
+
+    console.log(`📊 Pagination - limit: ${limitInt}, offset: ${offsetInt}`);
+
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
     if (!accessToken) throw new Error("Failed to retrieve access token");
 
-    // 2️⃣ Call Oracle API
+    // 2️⃣ Call Oracle API with pagination parameters
     const response = await axios.get(`${API_BASE_URL}/getFollowup`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+      params: {
+        limit: limitInt,
+        offset: offsetInt,
+      },
     });
 
-    console.log("✅ Oracle API Response:", response.data);
+    console.log("✅ Oracle API Response received");
 
     // 3️⃣ Parse response safely
     const oracleData = response.data || {};
     const followups = oracleData.items || [];
 
-    // 4️⃣ Return clean structured response
-    return successResponse(
-      res,
-      200,
-      "Follow-ups fetched successfully",
-      followups
-    );
+    // 5️⃣ Return clean structured response with pagination
+    return successResponse(res, 200, "Follow-ups fetched successfully", {
+      followups: followups,
+      pagination: {
+        limit: oracleData.limit,
+        offset: oracleData.offset,
+        hasMore: oracleData.hasMore,
+      },
+    });
   } catch (error) {
     console.error(
       "❌ Error fetching follow-ups:",

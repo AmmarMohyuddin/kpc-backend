@@ -10,23 +10,28 @@ const API_BASE_URL =
 
 async function orderHistory(req, res) {
   try {
+    const { limit = 10, offset = 0 } = req.query;
+
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
     if (!accessToken) {
       return errorResponse(res, 401, "Failed to retrieve access token");
     }
 
-    // 2️⃣ Call Oracle API
-    const response = await axios.get(
-      `${API_BASE_URL}/getOrderHistory?limit=10000`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
+    // 2️⃣ Call Oracle API with pagination parameters
+    const response = await axios.get(`${API_BASE_URL}/getOrderHistory`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      },
+    });
 
     // 3️⃣ Parse response
+    const oracleData = response.data;
+
     const orders =
-      response.data.items
+      oracleData.items
         ?.map((item) => {
           try {
             const parsed = JSON.parse(item.result);
@@ -41,13 +46,15 @@ async function orderHistory(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 4️⃣ Return structured response
-    return successResponse(
-      res,
-      200,
-      "Order history fetched successfully",
-      orders
-    );
+    // 4️⃣ Return structured response with pagination info
+    return successResponse(res, 200, "Order history fetched successfully", {
+      orders: orders,
+      pagination: {
+        limit: oracleData.limit,
+        offset: oracleData.offset,
+        hasMore: oracleData.hasMore,
+      },
+    });
   } catch (error) {
     console.error("❌ Error fetching order history:", error.message);
 

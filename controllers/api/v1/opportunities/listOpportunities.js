@@ -11,23 +11,28 @@ const API_BASE_URL =
 
 async function listOpportunities(req, res) {
   try {
+    const { limit = 10, offset = 0 } = req.query;
+
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
     if (!accessToken) {
       return errorResponse(res, 401, "Failed to retrieve access token");
     }
 
-    // 2️⃣ Call Oracle API
-    const response = await axios.get(
-      `${API_BASE_URL}/getOpportunity?limit=10000`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
+    // 2️⃣ Call Oracle API with pagination parameters
+    const response = await axios.get(`${API_BASE_URL}/getOpportunity`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      },
+    });
 
-    // 3️⃣ Parse opportunities
+    // 3️⃣ Parse response data
+    const oracleData = response.data;
+
     let opportunities =
-      response.data.items
+      oracleData.items
         ?.map((item) => {
           try {
             return JSON.parse(item.opportunity_json);
@@ -75,13 +80,15 @@ async function listOpportunities(req, res) {
       });
     }
 
-    // 6️⃣ Return structured response
-    return successResponse(
-      res,
-      200,
-      "Opportunities fetched successfully",
-      opportunities
-    );
+    // 6️⃣ Return structured response with pagination info
+    return successResponse(res, 200, "Opportunities fetched successfully", {
+      opportunities: opportunities,
+      pagination: {
+        limit: oracleData.limit,
+        offset: oracleData.offset,
+        hasMore: oracleData.hasMore,
+      },
+    });
   } catch (error) {
     console.error("❌ Error fetching opportunities:", error.message);
 

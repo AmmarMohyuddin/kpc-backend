@@ -10,13 +10,19 @@ const API_BASE_URL =
 
 async function listSalesRequest(req, res) {
   try {
+    const { limit = 10, offset = 0 } = req.query;
+
     // 1. Get Access Token
     const accessToken = await getAccessToken();
 
-    // 2. Call Oracle API
+    // 2. Call Oracle API with pagination parameters
     const response = await axios.get(`${API_BASE_URL}/getOrderDetails`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
       },
     });
 
@@ -35,13 +41,15 @@ async function listSalesRequest(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 4. Return clean structured response
-    return successResponse(
-      res,
-      200,
-      "Sales requests fetched successfully",
-      orders
-    );
+    // 4. Return response with pagination info from Oracle
+    return successResponse(res, 200, "Sales requests fetched successfully", {
+      orders,
+      pagination: {
+        limit: oracleData.limit,
+        offset: oracleData.offset,
+        hasMore: oracleData.hasMore,
+      },
+    });
   } catch (error) {
     console.error("❌ Error fetching sales requests:", error.message);
 

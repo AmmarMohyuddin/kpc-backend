@@ -10,21 +10,25 @@ const API_BASE_URL =
 
 async function draftSalesRequest(req, res) {
   try {
+    const { limit = 10, offset = 0 } = req.query;
+
     // 1. Get Access Token
     const accessToken = await getAccessToken();
     if (!accessToken) {
       return errorResponse(res, "Failed to retrieve access token", 401);
     }
 
-    // 2. Call Oracle API
-    const { data } = await axios.get(
-      `${API_BASE_URL}/getOrderDetails?ORDER_STATUS=DRAFT`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    // 2. Call Oracle API with pagination parameters
+    const { data } = await axios.get(`${API_BASE_URL}/getOrderDetails`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        ORDER_STATUS: "DRAFT",
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      },
+    });
 
     // 3. Parse & clean data
     const orders = (data?.items || [])
@@ -38,12 +42,19 @@ async function draftSalesRequest(req, res) {
       })
       .filter(Boolean);
 
-    // 4. Send clean structured response
+    // 4. Send clean structured response with pagination info
     return successResponse(
       res,
       200,
       "Draft Sales requests fetched successfully",
-      orders
+      {
+        orders: orders,
+        pagination: {
+          limit: data.limit,
+          offset: data.offset,
+          hasMore: data.hasMore,
+        },
+      }
     );
   } catch (error) {
     console.error("❌ Error fetching sales requests:", error.message);

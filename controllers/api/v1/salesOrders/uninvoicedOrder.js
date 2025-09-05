@@ -10,18 +10,21 @@ const API_BASE_URL =
 
 async function uninvoicedOrders(req, res) {
   try {
+    const { limit = 10, offset = 0 } = req.query;
+
     // 1. Get Access Token
     const accessToken = await getAccessToken();
 
-    // 2. Call Oracle API
-    const response = await axios.get(
-      `${API_BASE_URL}/getPendingOrders?limit=10000`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    // 2. Call Oracle API with pagination parameters
+    const response = await axios.get(`${API_BASE_URL}/getPendingOrders`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      params: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+      },
+    });
 
     // 3. Parse response
     const oracleData = response.data;
@@ -43,13 +46,15 @@ async function uninvoicedOrders(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 4. Return clean structured response
-    return successResponse(
-      res,
-      200,
-      "Uninvoiced orders fetched successfully",
-      orders
-    );
+    // 4. Return clean structured response with pagination info
+    return successResponse(res, 200, "Uninvoiced orders fetched successfully", {
+      orders: orders,
+      pagination: {
+        limit: oracleData.limit,
+        offset: oracleData.offset,
+        hasMore: oracleData.hasMore,
+      },
+    });
   } catch (error) {
     console.error("❌ Error fetching uninvoiced orders:", error.message);
 
