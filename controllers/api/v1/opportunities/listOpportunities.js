@@ -12,6 +12,23 @@ const API_BASE_URL =
 async function listOpportunities(req, res) {
   try {
     const { limit = 10, offset = 0 } = req.query;
+    const { OPPORTUNITY_ID, LEAD_NUMBER, DATE } = req.query.params || req.query;
+
+    const params = {};
+
+    if (OPPORTUNITY_ID) {
+      params.OPPORTUNITY_ID = OPPORTUNITY_ID;
+    } else if (LEAD_NUMBER) {
+      params.LEAD_NUMBER = LEAD_NUMBER;
+    } else if (DATE) {
+      params.DATE = DATE;
+    } else {
+      // ✅ Only apply pagination when no filter is present
+      params.limit = parseInt(limit);
+      params.offset = parseInt(offset);
+    }
+
+    console.log("➡️ Params Sent to Oracle API:", params);
 
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
@@ -19,16 +36,13 @@ async function listOpportunities(req, res) {
       return errorResponse(res, 401, "Failed to retrieve access token");
     }
 
-    // 2️⃣ Call Oracle API with pagination parameters
+    // 2️⃣ Call Oracle API
     const response = await axios.get(`${API_BASE_URL}/getOpportunity`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      params: {
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-      },
+      params,
     });
 
-    // 3️⃣ Parse response data
+    // 3️⃣ Parse response
     const oracleData = response.data;
 
     let opportunities =
@@ -42,25 +56,25 @@ async function listOpportunities(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 🔄 Collect all ITEM_IDs across all opportunities
+    // 4️⃣ Collect all ITEM_IDs across all opportunities
     const allItemIds = opportunities.flatMap((opp) =>
       opp.ORDER_LINES ? opp.ORDER_LINES.map((line) => line.ITEM_ID) : []
     );
 
     if (allItemIds.length > 0) {
-      // 4️⃣ Fetch all items in one go
+      // 5️⃣ Fetch all items in one go
       const items = await Item.find(
         { inventory_item_id: { $in: allItemIds } },
         { sub_cat: 1, item_number: 1, item_detail: 1, inventory_item_id: 1 }
       );
 
-      // Build lookup map { ITEM_ID: itemDetails }
+      // Build lookup map
       const itemMap = items.reduce((acc, item) => {
         acc[item.inventory_item_id] = item;
         return acc;
       }, {});
 
-      // 5️⃣ Enrich opportunities
+      // 6️⃣ Enrich opportunities with item details
       opportunities = opportunities.map((opp) => {
         if (!opp.ORDER_LINES) return opp;
 
@@ -80,14 +94,17 @@ async function listOpportunities(req, res) {
       });
     }
 
-    // 6️⃣ Return structured response with pagination info
+    // 7️⃣ Return structured response
     return successResponse(res, 200, "Opportunities fetched successfully", {
-      opportunities: opportunities,
-      pagination: {
-        limit: oracleData.limit,
-        offset: oracleData.offset,
-        hasMore: oracleData.hasMore,
-      },
+      opportunities,
+      pagination:
+        OPPORTUNITY_ID || LEAD_NUMBER || DATE
+          ? null // ✅ No pagination when filters are applied
+          : {
+              limit: oracleData.limit,
+              offset: oracleData.offset,
+              hasMore: oracleData.hasMore,
+            },
     });
   } catch (error) {
     console.error("❌ Error fetching opportunities:", error.message);

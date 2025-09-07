@@ -10,60 +10,69 @@ const API_BASE_URL =
 
 async function listFollow(req, res) {
   try {
-    console.log("🚀 Starting listFollow API...");
-
-    // Extract pagination parameters from query string
     const { limit = 10, offset = 0 } = req.query;
-    const limitInt = parseInt(limit);
-    const offsetInt = parseInt(offset);
+    const { FOLLOWUP_ID, LEAD_ID } = req.query.params || req.query;
 
-    console.log(`📊 Pagination - limit: ${limitInt}, offset: ${offsetInt}`);
+    const params = {};
+
+    // Apply filter if provided
+    if (FOLLOWUP_ID) {
+      params.FOLLOWUP_ID = FOLLOWUP_ID;
+    } else if (LEAD_ID) {
+      params.LEAD_ID = LEAD_ID;
+    } else {
+      // Only apply pagination if no filter is present
+      params.limit = parseInt(limit);
+      params.offset = parseInt(offset);
+    }
+
+    console.log("Params Sent to Oracle API:", params);
 
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
-    if (!accessToken) throw new Error("Failed to retrieve access token");
+    if (!accessToken) {
+      return errorResponse(res, 401, "Failed to retrieve access token");
+    }
 
-    // 2️⃣ Call Oracle API with pagination parameters
+    // 2️⃣ Call Oracle API
     const response = await axios.get(`${API_BASE_URL}/getFollowup`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-      params: {
-        limit: limitInt,
-        offset: offsetInt,
-      },
+      params,
     });
 
-    console.log("✅ Oracle API Response received");
+    // 3️⃣ Parse response
+    const oracleData = response.data;
+    let followups = oracleData.items || [];
 
-    // 3️⃣ Parse response safely
-    const oracleData = response.data || {};
-    const followups = oracleData.items || [];
+    // 4️⃣ Filter only items with source "Lead"
+    followups = followups.filter((fu) => fu.source === "Lead");
 
-    // 5️⃣ Return clean structured response with pagination
+    // 5️⃣ Return response
     return successResponse(res, 200, "Follow-ups fetched successfully", {
-      followups: followups,
-      pagination: {
-        limit: oracleData.limit,
-        offset: oracleData.offset,
-        hasMore: oracleData.hasMore,
-      },
+      followups,
+      pagination:
+        FOLLOWUP_ID || LEAD_ID
+          ? null // ❌ disable pagination if filter is applied
+          : {
+              limit: oracleData.limit,
+              offset: oracleData.offset,
+              hasMore: oracleData.hasMore,
+            },
     });
   } catch (error) {
-    console.error(
-      "❌ Error fetching follow-ups:",
-      error.response?.data || error.message
-    );
+    console.error("❌ Error fetching follow-ups:", error.message);
 
     if (error.response) {
       return errorResponse(
         res,
-        error.response.status || 500,
-        error.response.data?.message || "Oracle API error"
+        error.response.data?.message || "Oracle API error",
+        error.response.status
       );
     }
 
-    return errorResponse(res, 500, "Internal Server Error");
+    return errorResponse(res, "Internal Server Error", 500);
   }
 }
 

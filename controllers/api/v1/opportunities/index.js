@@ -7,6 +7,7 @@ const createFollowup = require("./createFollowup");
 const convertToSales = require("./convertToSales");
 const getStatus = require("./getStatus");
 const opportunityChart = require("./opportunityChart");
+const listFollowup = require("./listFollowup");
 
 module.exports = {
   listOpportunities,
@@ -17,5 +18,6 @@ module.exports = {
   createFollowup,
   convertToSales,
   getStatus,
+  listFollowup,
   opportunityChart,
 };

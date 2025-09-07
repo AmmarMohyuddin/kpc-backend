@@ -11,6 +11,24 @@ const API_BASE_URL =
 async function orderHistory(req, res) {
   try {
     const { limit = 10, offset = 0 } = req.query;
+    const { ORDER_NUMBER, CUSTOMER_NAME, ACCOUNT_NUMBER } =
+      req.query.params || req.query;
+    console.log("➡️ Query Params:", req.query);
+    const params = {};
+
+    // ✅ Apply filters if present, otherwise fallback to pagination
+    if (ORDER_NUMBER) {
+      params.ORDER_NO = ORDER_NUMBER;
+    } else if (CUSTOMER_NAME) {
+      params.CUSTOMER_NAME = CUSTOMER_NAME;
+    } else if (ACCOUNT_NUMBER) {
+      params.ACCOUNT_NUMBER = ACCOUNT_NUMBER;
+    } else {
+      params.limit = parseInt(limit);
+      params.offset = parseInt(offset);
+    }
+
+    console.log("➡️ Params Sent to Oracle API:", params);
 
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
@@ -18,13 +36,10 @@ async function orderHistory(req, res) {
       return errorResponse(res, 401, "Failed to retrieve access token");
     }
 
-    // 2️⃣ Call Oracle API with pagination parameters
+    // 2️⃣ Call Oracle API
     const response = await axios.get(`${API_BASE_URL}/getOrderHistory`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      params: {
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-      },
+      params,
     });
 
     // 3️⃣ Parse response
@@ -37,6 +52,8 @@ async function orderHistory(req, res) {
             const parsed = JSON.parse(item.result);
             return {
               order_no: parsed.ORDER_NO,
+              customer_name: parsed.CUSTOMER_NAME,
+              account_no: parsed.ACCOUNT_NO,
               lines: parsed.LINES || [],
             };
           } catch (err) {
@@ -46,14 +63,17 @@ async function orderHistory(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 4️⃣ Return structured response with pagination info
+    // 4️⃣ Return structured response
     return successResponse(res, 200, "Order history fetched successfully", {
-      orders: orders,
-      pagination: {
-        limit: oracleData.limit,
-        offset: oracleData.offset,
-        hasMore: oracleData.hasMore,
-      },
+      orders,
+      pagination:
+        ORDER_NUMBER || CUSTOMER_NAME || ACCOUNT_NUMBER
+          ? null // ✅ No pagination when filters applied
+          : {
+              limit: oracleData.limit,
+              offset: oracleData.offset,
+              hasMore: oracleData.hasMore,
+            },
     });
   } catch (error) {
     console.error("❌ Error fetching order history:", error.message);

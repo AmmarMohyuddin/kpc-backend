@@ -11,22 +11,35 @@ const API_BASE_URL =
 async function uninvoicedOrders(req, res) {
   try {
     const { limit = 10, offset = 0 } = req.query;
+    const { ORDER_NUMBER } = req.query.params || req.query;
 
-    // 1. Get Access Token
+    const params = {};
+
+    if (ORDER_NUMBER) {
+      params.ORDER_NO = ORDER_NUMBER;
+    } else {
+      // Only apply pagination if no filter is present
+      params.limit = parseInt(limit);
+      params.offset = parseInt(offset);
+    }
+
+    console.log("Params Sent to Oracle API:", params);
+
+    // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
+    if (!accessToken) {
+      return errorResponse(res, 401, "Failed to retrieve access token");
+    }
 
-    // 2. Call Oracle API with pagination parameters
+    // 2️⃣ Call Oracle API
     const response = await axios.get(`${API_BASE_URL}/getPendingOrders`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-      params: {
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-      },
+      params,
     });
 
-    // 3. Parse response
+    // 3️⃣ Parse response
     const oracleData = response.data;
 
     const orders =
@@ -34,7 +47,6 @@ async function uninvoicedOrders(req, res) {
         ?.map((item) => {
           try {
             const parsed = JSON.parse(item.result);
-
             return {
               order_no: parsed.ORDER_NO,
               lines: parsed.LINES || [],
@@ -46,14 +58,16 @@ async function uninvoicedOrders(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 4. Return clean structured response with pagination info
+    // 4️⃣ Return response
     return successResponse(res, 200, "Uninvoiced orders fetched successfully", {
-      orders: orders,
-      pagination: {
-        limit: oracleData.limit,
-        offset: oracleData.offset,
-        hasMore: oracleData.hasMore,
-      },
+      orders,
+      pagination: ORDER_NUMBER
+        ? null // ❌ disable pagination if filter is applied
+        : {
+            limit: oracleData.limit,
+            offset: oracleData.offset,
+            hasMore: oracleData.hasMore,
+          },
     });
   } catch (error) {
     console.error("❌ Error fetching uninvoiced orders:", error.message);

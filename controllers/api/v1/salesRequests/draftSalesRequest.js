@@ -11,67 +11,83 @@ const API_BASE_URL =
 async function draftSalesRequest(req, res) {
   try {
     const { limit = 10, offset = 0 } = req.query;
+    const { CUSTOMER_NAME, ORDER_NUMBER } = req.query.params || req.query;
 
-    // 1. Get Access Token
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-      return errorResponse(res, "Failed to retrieve access token", 401);
+    const params = { ORDER_STATUS: "DRAFT" };
+
+    // Apply filters if provided
+    if (CUSTOMER_NAME) {
+      params.CUSTOMER_NAME = CUSTOMER_NAME;
+    } else if (ORDER_NUMBER) {
+      params.ORDER_NUMBER = ORDER_NUMBER;
+    } else {
+      // ✅ Only apply pagination when no filters
+      params.limit = parseInt(limit);
+      params.offset = parseInt(offset);
     }
 
-    // 2. Call Oracle API with pagination parameters
-    const { data } = await axios.get(`${API_BASE_URL}/getOrderDetails`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      params: {
-        ORDER_STATUS: "DRAFT",
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-      },
+    console.log("➡️ Params sent to Oracle API:", params);
+
+    // 1️⃣ Get Access Token
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      return errorResponse(res, 401, "Failed to retrieve access token");
+    }
+
+    // 2️⃣ Call Oracle API
+    const response = await axios.get(`${API_BASE_URL}/getOrderDetails`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params,
     });
 
-    // 3. Parse & clean data
-    const orders = (data?.items || [])
-      .map((item) => {
-        try {
-          return JSON.parse(item.order_json);
-        } catch (err) {
-          console.error("❌ Failed to parse order_json:", err.message);
-          return null;
-        }
-      })
-      .filter(Boolean);
+    const data = response.data;
 
-    // 4. Send clean structured response with pagination info
+    // 3️⃣ Parse order JSON safely
+    const orders =
+      data.items
+        ?.map((item) => {
+          try {
+            return JSON.parse(item.order_json);
+          } catch (err) {
+            console.error("❌ Failed to parse order_json:", err.message);
+            return null;
+          }
+        })
+        .filter(Boolean) || [];
+
+    // 4️⃣ Return structured response with conditional pagination
     return successResponse(
       res,
       200,
       "Draft Sales requests fetched successfully",
       {
-        orders: orders,
-        pagination: {
-          limit: data.limit,
-          offset: data.offset,
-          hasMore: data.hasMore,
-        },
+        orders,
+        pagination:
+          CUSTOMER_NAME || ORDER_NUMBER
+            ? null // ✅ No pagination when filters are applied
+            : {
+                limit: data.limit,
+                offset: data.offset,
+                hasMore: data.hasMore,
+              },
       }
     );
   } catch (error) {
-    console.error("❌ Error fetching sales requests:", error.message);
+    console.error("❌ Error fetching draft sales requests:", error.message);
 
     if (error.response) {
       return errorResponse(
         res,
-        error.response.data?.message || "Oracle API error",
-        error.response.status
+        error.response.status,
+        error.response.data?.message || "Oracle API error"
       );
     }
 
     if (error.code === "ECONNABORTED") {
-      return errorResponse(res, "Request timed out", 504);
+      return errorResponse(res, 504, "Request timed out");
     }
 
-    return errorResponse(res, "Internal Server Error", 500);
+    return errorResponse(res, 500, "Internal Server Error");
   }
 }
 

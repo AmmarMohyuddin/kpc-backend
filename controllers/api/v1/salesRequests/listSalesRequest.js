@@ -11,22 +11,36 @@ const API_BASE_URL =
 async function listSalesRequest(req, res) {
   try {
     const { limit = 10, offset = 0 } = req.query;
+    const { CUSTOMER_NAME, ORDER_NUMBER } = req.query.params || req.query;
+    const params = {};
+    // Apply filters if provided
+    if (CUSTOMER_NAME) {
+      params.CUSTOMER_NAME = CUSTOMER_NAME;
+    } else if (ORDER_NUMBER) {
+      params.ORDER_NUMBER = ORDER_NUMBER;
+    } else {
+      // ✅ Only apply pagination when no filters
+      params.limit = parseInt(limit);
+      params.offset = parseInt(offset);
+    }
 
-    // 1. Get Access Token
+    console.log("➡️ Params sent to Oracle API:", params);
+
+    // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
+    if (!accessToken) {
+      return errorResponse(res, 401, "Failed to retrieve access token");
+    }
 
-    // 2. Call Oracle API with pagination parameters
+    // 2️⃣ Call Oracle API
     const response = await axios.get(`${API_BASE_URL}/getOrderDetails`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
-      params: {
-        limit: parseInt(limit),
-        offset: parseInt(offset),
-      },
+      params,
     });
 
-    // 3. Parse response
+    // 3️⃣ Parse response
     const oracleData = response.data;
 
     const orders =
@@ -41,14 +55,17 @@ async function listSalesRequest(req, res) {
         })
         .filter(Boolean) || [];
 
-    // 4. Return response with pagination info from Oracle
+    // 4️⃣ Return response with conditional pagination
     return successResponse(res, 200, "Sales requests fetched successfully", {
       orders,
-      pagination: {
-        limit: oracleData.limit,
-        offset: oracleData.offset,
-        hasMore: oracleData.hasMore,
-      },
+      pagination:
+        CUSTOMER_NAME || ORDER_NUMBER
+          ? null // disable pagination if filter is applied
+          : {
+              limit: oracleData.limit,
+              offset: oracleData.offset,
+              hasMore: oracleData.hasMore,
+            },
     });
   } catch (error) {
     console.error("❌ Error fetching sales requests:", error.message);
