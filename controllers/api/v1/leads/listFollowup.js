@@ -10,8 +10,8 @@ const API_BASE_URL =
 
 async function listFollow(req, res) {
   try {
-    const { limit = 10, offset = 0 } = req.query;
-    const { FOLLOWUP_ID, LEAD_ID } = req.query.params || req.query;
+    const { limit, offset, FOLLOWUP_ID, LEAD_ID } =
+      req.query.params || req.query;
 
     const params = {};
 

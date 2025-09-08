@@ -11,8 +11,8 @@ const API_BASE_URL =
 
 async function listOpportunities(req, res) {
   try {
-    const { limit = 10, offset = 0 } = req.query;
-    const { OPPORTUNITY_ID, LEAD_NUMBER, DATE } = req.query.params || req.query;
+    const { limit, offset, OPPORTUNITY_ID, LEAD_NUMBER, DATE } =
+      req.query.params || req.query;
 
     const params = {};
 

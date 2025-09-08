@@ -13,8 +13,8 @@ async function listFollow(req, res) {
     console.log("🚀 Starting listFollow API...");
 
     // Extract params from query
-    const { limit = 10, offset = 0 } = req.query;
-    const { OPPORTUNITY_ID, FOLLOWUP_ID } = req.query.params || req.query;
+    const { limit, offset, OPPORTUNITY_ID, FOLLOWUP_ID } =
+      req.query.params || req.query;
 
     const limitInt = parseInt(limit);
     const offsetInt = parseInt(offset);

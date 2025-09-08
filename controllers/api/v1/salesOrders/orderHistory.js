@@ -10,8 +10,7 @@ const API_BASE_URL =
 
 async function orderHistory(req, res) {
   try {
-    const { limit = 10, offset = 0 } = req.query;
-    const { ORDER_NUMBER, CUSTOMER_NAME, ACCOUNT_NUMBER } =
+    const { limit, offset, ORDER_NUMBER, CUSTOMER_NAME, ACCOUNT_NUMBER } =
       req.query.params || req.query;
     console.log("➡️ Query Params:", req.query);
     const params = {};

@@ -10,8 +10,8 @@ const API_BASE_URL =
 
 async function listSalesRequest(req, res) {
   try {
-    const { limit = 10, offset = 0 } = req.query;
-    const { CUSTOMER_NAME, ORDER_NUMBER } = req.query.params || req.query;
+    const { limit, offset, CUSTOMER_NAME, ORDER_NUMBER } =
+      req.query.params || req.query;
     const params = {};
     // Apply filters if provided
     if (CUSTOMER_NAME) {

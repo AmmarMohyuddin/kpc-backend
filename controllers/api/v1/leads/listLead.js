@@ -10,8 +10,8 @@ const API_BASE_URL =
 
 async function listLead(req, res) {
   try {
-    const { limit = 10, offset = 0 } = req.query;
-    const { CUSTOMER_NAME, LEAD_NUMBER, DATE } = req.query.params || req.query;
+    const { limit, offset, CUSTOMER_NAME, LEAD_NUMBER, DATE } =
+      req.query.params || req.query;
 
     const params = {};
 
