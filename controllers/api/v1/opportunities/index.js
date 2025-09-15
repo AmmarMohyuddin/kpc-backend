@@ -8,6 +8,7 @@ const convertToSales = require("./convertToSales");
 const getStatus = require("./getStatus");
 const opportunityChart = require("./opportunityChart");
 const listFollowup = require("./listFollowup");
+const oppFollowups = require("./oppFollowups");
 
 module.exports = {
   listOpportunities,
@@ -20,4 +21,5 @@ module.exports = {
   getStatus,
   listFollowup,
   opportunityChart,
+  oppFollowups,
 };

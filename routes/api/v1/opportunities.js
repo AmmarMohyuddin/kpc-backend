@@ -12,6 +12,7 @@ const {
   getStatus,
   opportunityChart,
   listFollowup,
+  oppFollowups,
 } = require("../../../controllers/api/v1/opportunities");
 
 router.get("/listOpportunities", listOpportunities);
@@ -24,5 +25,6 @@ router.post("/convertToSales", convertToSales);
 router.get("/listFollowup", listFollowup);
 router.get("/getStatus", getStatus);
 router.get("/opportunityChart", opportunityChart);
+router.get("/oppFollowups", oppFollowups);
 
 module.exports = router;
