@@ -12,13 +12,12 @@ async function salesChart(req, res) {
   try {
     // 1. Get Access Token
     const accessToken = await getAccessToken();
-
     if (!accessToken) {
       return errorResponse(res, 401, "Failed to retrieve access token");
     }
 
     // 2. Call Oracle API
-    const response = await axios.get(`${API_BASE_URL}/getOrderDetails`, {
+    const response = await axios.get(`${API_BASE_URL}/activityStatsV2`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -27,14 +26,16 @@ async function salesChart(req, res) {
     // 3. Parse response
     const oracleData = response.data;
 
-    const orders = oracleData.items;
-
-    // 4. Count orders
-    const totalSalesRequests = orders.length;
+    // 4. Extract stats safely
+    const leads = oracleData.leads ?? 0;
+    const opportunities = oracleData.opportunity ?? 0;
+    const salesRequests = oracleData.sales_request ?? 0;
 
     // 5. Return response
     return successResponse(res, 200, "Sales chart data fetched successfully", {
-      sales_requests: totalSalesRequests,
+      leads,
+      opportunities,
+      salesRequests,
     });
   } catch (error) {
     console.error("❌ Error fetching sales chart data:", error.message);
