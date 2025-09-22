@@ -11,7 +11,7 @@ const API_BASE_URL =
 
 async function listOpportunities(req, res) {
   try {
-    const { limit, offset, OPPORTUNITY_ID, LEAD_NUMBER, DATE } =
+    const { limit, offset, OPPORTUNITY_ID, LEAD_NUMBER, from_date, to_date } =
       req.query.params || req.query;
 
     const params = {};
@@ -20,12 +20,13 @@ async function listOpportunities(req, res) {
       params.OPPORTUNITY_ID = OPPORTUNITY_ID;
     } else if (LEAD_NUMBER) {
       params.LEAD_NUMBER = LEAD_NUMBER;
-    } else if (DATE) {
-      params.DATE = DATE;
+    } else if (from_date && to_date) {
+      params.FROM_DATE = from_date;
+      params.TO_DATE = to_date;
     } else {
       // ✅ Only apply pagination when no filter is present
-      params.limit = parseInt(limit);
-      params.offset = parseInt(offset);
+      if (limit) params.limit = parseInt(limit);
+      if (offset) params.offset = parseInt(offset);
     }
 
     console.log("➡️ Params Sent to Oracle API:", params);
@@ -98,7 +99,7 @@ async function listOpportunities(req, res) {
     return successResponse(res, 200, "Opportunities fetched successfully", {
       opportunities,
       pagination:
-        OPPORTUNITY_ID || LEAD_NUMBER || DATE
+        OPPORTUNITY_ID || LEAD_NUMBER || (from_date && to_date)
           ? null // ✅ No pagination when filters are applied
           : {
               limit: oracleData.limit,

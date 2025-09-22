@@ -10,24 +10,26 @@ const API_BASE_URL =
 
 async function listLead(req, res) {
   try {
-    const { limit, offset, CUSTOMER_NAME, LEAD_NUMBER, DATE } =
+    const { limit, offset, CUSTOMER_NAME, LEAD_NUMBER, from_date, to_date } =
       req.query.params || req.query;
 
     const params = {};
+    console.log(req.query.params || req.query);
 
     if (CUSTOMER_NAME) {
       params.CUSTOMER_NAME = CUSTOMER_NAME;
     } else if (LEAD_NUMBER) {
       params.LEAD_NUMBER = LEAD_NUMBER;
-    } else if (DATE) {
-      params.DATE = DATE;
+    } else if (from_date && to_date) {
+      params.FROM_DATE = from_date;
+      params.TO_DATE = to_date;
     } else {
-      // Only apply pagination if no filter is present
-      params.limit = parseInt(limit);
-      params.offset = parseInt(offset);
+      // ✅ Only apply pagination if no filter is present
+      if (limit) params.limit = parseInt(limit);
+      if (offset) params.offset = parseInt(offset);
     }
 
-    console.log("Params Sent to Oracle API:", params);
+    console.log("➡️ Params Sent to Oracle API:", params);
 
     // 1️⃣ Get Access Token
     const accessToken = await getAccessToken();
@@ -35,11 +37,9 @@ async function listLead(req, res) {
       return errorResponse(res, 401, "Failed to retrieve access token");
     }
 
-    // 2️⃣ Call Oracle API with filters or pagination
+    // 2️⃣ Call Oracle API
     const response = await axios.get(`${API_BASE_URL}/getLeads`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+      headers: { Authorization: `Bearer ${accessToken}` },
       params,
     });
 
@@ -47,12 +47,12 @@ async function listLead(req, res) {
     const oracleData = response.data;
     const leads = oracleData.items || [];
 
-    // 4️⃣ Return clean structured response
+    // 4️⃣ Return structured response
     return successResponse(res, 200, "Leads fetched successfully", {
       leads,
       pagination:
-        CUSTOMER_NAME || LEAD_NUMBER
-          ? null // ❌ no pagination when filter is applied
+        CUSTOMER_NAME || LEAD_NUMBER || (from_date && to_date)
+          ? null // ❌ No pagination when filters applied
           : {
               limit: oracleData.limit,
               offset: oracleData.offset,

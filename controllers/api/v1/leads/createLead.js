@@ -17,7 +17,32 @@ function formatIsoDate(date = new Date()) {
   )}`;
 }
 
-// Helper: Fetch status_id & stage from CRM
+// 🔹 Generate new lead number
+async function generateLeadNumber() {
+  try {
+    console.log("🔍 Requesting new LeadNumber...");
+
+    const response = await axios.post(
+      "http://130.61.114.96/api/v1/leads/create"
+    );
+
+    console.log("✅ LeadNumber response:", response.data);
+
+    if (response.data?.data?.leadId) {
+      return response.data.data.leadId; // ✅ use leadId
+    } else {
+      throw new Error("Invalid response when generating LeadNumber");
+    }
+  } catch (error) {
+    console.error(
+      "❌ Failed to generate LeadNumber:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
+
+// 🔹 Fetch status_id & stage from CRM
 async function getStatusDetails(statusName, accessToken) {
   try {
     const res = await axios.get(`${API_BASE_URL}/getCRMStatusLookup`, {
@@ -46,13 +71,13 @@ async function getStatusDetails(statusName, accessToken) {
   }
 }
 
+// 🔹 Create Lead Controller
 async function createLead(req, res) {
   let accessToken;
   try {
     console.log("🚀 Starting createLead API...");
     console.log("📩 Incoming body:", req.body);
 
-    // Extract data from request body
     const {
       customer_name,
       customer_type,
@@ -74,6 +99,11 @@ async function createLead(req, res) {
 
     const currentDate = formatIsoDate();
 
+    // 🔹 Generate Lead Number
+    const leadId = await generateLeadNumber();
+    const LEAD_NUMBER = `LW-${leadId}`;
+    console.log("🆔 Generated Lead Number:", LEAD_NUMBER);
+
     // 🔹 Map salesperson_id from DB
     const salesPersonObj = await salesPerson.findById(salesperson_id).select({
       salesperson_id: 1,
@@ -84,8 +114,9 @@ async function createLead(req, res) {
     // 🔹 Get Status ID & Stage from CRM
     const { status_id, stage } = await getStatusDetails(status, accessToken);
 
-    // Prepare lead payload
+    // 🔹 Prepare lead payload
     const leadPayload = {
+      lead_number: LEAD_NUMBER, // ✅ auto-generated
       lead_type: customer_type,
       customer_name,
       customer_type,
@@ -109,7 +140,7 @@ async function createLead(req, res) {
 
     console.log("📤 Sending createLead API with payload:", leadPayload);
 
-    // Make API call to create lead
+    // 🔹 Call external API
     const response = await axios.post(
       `${API_BASE_URL}/createLead`,
       leadPayload,

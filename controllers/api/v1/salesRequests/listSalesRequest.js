@@ -10,14 +10,21 @@ const API_BASE_URL =
 
 async function listSalesRequest(req, res) {
   try {
-    const { limit, offset, CUSTOMER_NAME, ORDER_NUMBER } =
-      req.query.params || req.query;
+    const {
+      limit,
+      offset,
+      CUSTOMER_NAME,
+      ORDER_NUMBER,
+      CUSTOMER_ACCOUNT_NUMBER,
+    } = req.query.params || req.query;
     const params = {};
     // Apply filters if provided
     if (CUSTOMER_NAME) {
       params.CUSTOMER_NAME = CUSTOMER_NAME;
     } else if (ORDER_NUMBER) {
       params.ORDER_NUMBER = ORDER_NUMBER;
+    } else if (CUSTOMER_ACCOUNT_NUMBER) {
+      params.CUSTOMER_ACCOUNT_NUMBER = CUSTOMER_ACCOUNT_NUMBER;
     } else {
       // ✅ Only apply pagination when no filters
       params.limit = parseInt(limit);
