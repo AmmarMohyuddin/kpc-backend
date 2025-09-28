@@ -57,15 +57,16 @@ async function convertFromOpportunity(req, res) {
       opportunity_id,
       opportunity_details,
       customer_details,
+      address_details,
       order_status,
     } = req.body;
 
-    if (!opportunity_id || !customer_details) {
+    if (!opportunity_id || !customer_details || !address_details) {
       console.log("❌ Missing required fields");
       return errorResponse(
         res,
         400,
-        "Opportunity ID and customer details are required"
+        "Opportunity ID, customer details, and address details are required"
       );
     }
 
@@ -203,11 +204,11 @@ async function convertFromOpportunity(req, res) {
       site_id: customerDetail.party_site_id || "",
       site_use_id: customerDetail.site_use_id || "",
       fusion_sales_order_num: "",
-      customer_city: customer_details.city || "",
-      customer_address: customer_details.shippingAddress || "",
-      customer_block: customer_details.block || "",
-      contact_person: customer_details.contact_person || "",
-      contact_number: customer_details.contact_number || "",
+      customer_city: address_details.city || "",
+      customer_address: address_details.shippingAddress || "",
+      customer_block: address_details.block || "",
+      contact_person: address_details.name || "",
+      contact_number: address_details.contactNumber || "",
       opportunity_id: opportunity_id,
     };
 
