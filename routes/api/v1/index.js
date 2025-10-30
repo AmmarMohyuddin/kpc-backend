@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const users = require("./user");
+const auth = require("./auth");
 const importUser = require("./importUser");
 const password = require("./password");
 const order = require("./order");
@@ -20,6 +21,7 @@ const opportunities = require("./opportunities");
 const notifications = require("./notification");
 
 router.use("/users", users);
+router.use("/auth", auth);
 router.use("/password", password);
 router.use("/importUsers", importUser);
 router.use("/orders", order);
