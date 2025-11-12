@@ -2,6 +2,7 @@ const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const querystring = require("querystring");
 const Salesperson = require("../../../../models/salesperson");
+const User = require("../../../../models/user");
 const {
   successResponse,
   errorResponse,
@@ -22,6 +23,15 @@ async function ocicallback(req, res) {
       return errorResponse(res, 400, "Authorization code not received");
     }
 
+    console.log("[OCI] Callback hit", {
+      originalUrl: req.originalUrl,
+      queryKeys: Object.keys(req.query || {}),
+      codeLength: code ? code.length : 0,
+      referer: req.headers?.referer,
+      cookieLength: req.headers && req.headers.cookie ? req.headers.cookie.length : 0,
+      userAgent: req.headers?.['user-agent'],
+    });
+
     // Exchange authorization code for tokens
     const tokenResponse = await axios.post(
       `${IDCS_DOMAIN}/oauth2/v1/token`,
@@ -41,6 +51,19 @@ async function ocicallback(req, res) {
       }
     );
 
+    try {
+      console.log("[OCI] Token response received", {
+        status: tokenResponse.status,
+        dataKeys: Object.keys(tokenResponse.data || {}),
+        idTokenLength: tokenResponse?.data?.id_token ? tokenResponse.data.id_token.length : 0,
+        headersSize: (() => {
+          try { return JSON.stringify(tokenResponse.headers || {}).length; } catch { return -1; }
+        })(),
+      });
+    } catch (logErr) {
+      console.log("[OCI] Failed to log token response summary:", logErr?.message || logErr);
+    }
+
     const { id_token } = tokenResponse.data;
 
     // Decode ID token (JWT) to get user info
@@ -48,6 +71,13 @@ async function ocicallback(req, res) {
 
     console.log("=== Decoded User Info ===");
     console.log(JSON.stringify(decoded, null, 2));
+
+    console.log("[OCI] Decoded claims summary", {
+      sub: decoded?.sub,
+      preferred_username: decoded?.preferred_username,
+      email: decoded?.email,
+      name: decoded?.user_displayname || `${decoded?.given_name || ""} ${decoded?.family_name || ""}`.trim(),
+    });
 
     // Check if employee_number in salespersons table matches with the "sub" key
     const { sub } = decoded;
@@ -57,21 +87,29 @@ async function ocicallback(req, res) {
     }
 
     // Find salesperson by employee_number
+    console.log("[OCI] Looking up salesperson by employee_number (sub)", { sub });
     const salesPerson = await Salesperson.findOne({ employee_number: sub });
+    const admin = await User.findOne({ person_number: sub, role: "admin" });
 
-    if (!salesPerson) {
+    if (!salesPerson  && !admin) {
       // Encode error data and redirect to frontend
       const errorData = {
         success: false,
-        message: "Sales person not found",
+        message: "Sales person or admin not found",
       };
-      const encodedData = Buffer.from(JSON.stringify(errorData)).toString(
-        "base64"
-      );
+      const errorJson = JSON.stringify(errorData);
+      const encodedData = Buffer.from(errorJson).toString("base64");
+      console.log("[OCI] Salesperson or admin not found; redirecting with error", {
+        jsonBytes: Buffer.byteLength(errorJson, "utf8"),
+        base64Bytes: Buffer.byteLength(encodedData, "utf8"),
+      });
       res.redirect(
         `${FRONTEND_URL}/auth/oracle/callback?response=${encodedData}`
       );
       return;
+    }
+    else {
+      console.log("[OCI] Salesperson found", { salesPerson });
     }
 
     // Prepare user info from Oracle token
@@ -82,6 +120,7 @@ async function ocicallback(req, res) {
         `${decoded.given_name || ""} ${decoded.family_name || ""}`.trim(),
       email: decoded.email || "N/A",
       salesPerson: salesPerson,
+      admin: admin,
     };
 
     // Note: cookies are now handled by frontend via localStorage
@@ -93,19 +132,37 @@ async function ocicallback(req, res) {
       data: {
         salesPerson,
         id_token: id_token,
-        // user_info: userInfo,
+        user_info: userInfo,
       },
     };
 
     // Encode the response data as base64 to pass in URL
-    const encodedData = Buffer.from(JSON.stringify(responseData)).toString(
-      "base64"
-    );
+    const responseJson = JSON.stringify(responseData);
 
-    // Redirect to frontend with the data as a query parameter
-    res.redirect(
-      `${FRONTEND_URL}/auth/oracle/callback?response=${encodedData}`
-    );
+    // print responseData
+    console.log("[OCI] Response data", JSON.stringify(responseData, null, 2));
+
+    const encodedData = Buffer.from(responseJson).toString("base64");
+    console.log("[OCI] Success redirect payload sizes", {
+      idTokenLength: id_token ? id_token.length : 0,
+      jsonBytes: Buffer.byteLength(responseJson, "utf8"),
+      base64Bytes: Buffer.byteLength(encodedData, "utf8"),
+    });
+
+    // print encodedData
+    console.log("[OCI] Encoded data", encodedData);
+
+    // Redirect to frontend kwith the data as a query parameter
+    // res.redirect(
+    //   `${FRONTEND_URL}/auth/oracle/callback?response=${encodedData}`
+    // );
+
+    return successResponse(res, 200, "Successfully authenticated with Oracle Identity Cloud", {
+      salesPerson,
+      admin,
+      id_token: id_token,
+      user_info: userInfo,
+    });
   } catch (error) {
     console.error(
       "Error in OCI callback:",
@@ -119,9 +176,14 @@ async function ocicallback(req, res) {
       error: error.message,
     };
 
-    const encodedData = Buffer.from(JSON.stringify(errorData)).toString(
-      "base64"
-    );
+    const errorJsonStr = JSON.stringify(errorData);
+    const encodedData = Buffer.from(errorJsonStr).toString("base64");
+    console.log("[OCI] Error redirect payload sizes", {
+      jsonBytes: Buffer.byteLength(errorJsonStr, "utf8"),
+      base64Bytes: Buffer.byteLength(encodedData, "utf8"),
+      axiosStatus: error?.response?.status,
+      axiosDataKeys: error?.response?.data ? Object.keys(error.response.data) : [],
+    });
 
     // Redirect to frontend with error
     res.redirect(

@@ -2,13 +2,13 @@ require("dotenv").config();
 const express = require("express");
 const dbConnection = require("./db/Connection");
 const routes = require("./routes/api/v1");
-const fs = require("fs");
+// const fs = require("fs");
 const cors = require("cors");
 const morgan = require("morgan");
 const path = require("path");
 const app = express();
 const port = process.env.PORT || 3000;
-const https = require("https");
+// const https = require("https");
 
 app.use(morgan("tiny"));
 app.use(cors("*"));
@@ -35,20 +35,20 @@ app.use("/api/v1", routes);
 dbConnection()
   .then((result) => {
     if (result) {
-      https
-        .createServer(
-          {
-            key: fs.readFileSync("./cert/key.pem"),
-            cert: fs.readFileSync("./cert/cert.pem"),
-          },
-          app
-        )
-        .listen(port, () => {
-          console.log(`Server running at https://localhost:${port}`);
-        });
-      // app.listen(port, () => {
-      //   console.log(`Server is running on PORT ${port}`);
-      // });
+      // https
+      //   .createServer(
+      //     {
+      //       // key: fs.readFileSync("./cert/key.pem"),
+      //       // cert: fs.readFileSync("./cert/cert.pem"),
+      //     },
+      //     app
+      //   )
+      //   .listen(port, () => {
+      //     console.log(`Server running at https://localhost:${port}`);
+      //   });
+      app.listen(port, () => {
+        console.log(`Server is running on PORT ${port}`);
+      });
     }
   })
   .catch((error) => {
