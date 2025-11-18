@@ -19,6 +19,9 @@ const salesOrder = require("./salesOrder");
 const leadSource = require("./leadSource");
 const opportunities = require("./opportunities");
 const notifications = require("./notification");
+const actualSales = require("./actualSales");
+const targetSales = require("./targetSales");
+const actualVSTargetSales = require("./actualVSTargetSales");
 
 router.use("/users", users);
 router.use("/auth", auth);
@@ -38,5 +41,8 @@ router.use("/cities", city);
 router.use("/blocks", block);
 router.use("/leadSources", leadSource);
 router.use("/opportunities", opportunities);
+router.use("/actualSales", actualSales);
+router.use("/targetSales", targetSales);
+router.use("/actualVSTargetSales", actualVSTargetSales);
 
 module.exports = router;
