@@ -7,11 +7,6 @@ package-lock.json
 yarn.lock
 
 # Environment variables
-.env
-.env.local
-.env.development
-.env.test
-.env.production
 .env*.local
 
 # Logs
@@ -40,7 +35,6 @@ build/
 *.tsbuildinfo
 
 # IDE and editor files
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -91,9 +85,6 @@ temp/
 .yarn-integrity
 
 # dotenv environment variable files
-.env
-.env.test
-.env.production
 
 # parcel-bundler cache
 .cache
@@ -122,5 +113,9 @@ out
 .tern-port
 
 # Stores VSCode versions used for testing VSCode extensions
-.vscode-test
 
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore
+config.bat
